@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跨國搜尋比較台</title>
+<style>
+  :root {
+    --board:      #14171f;
+    --panel:      #1c202b;
+    --panel-2:    #232833;
+    --line:       #333a48;
+    --ink:        #ece7db;
+    --muted:      #838b9c;
+    --amber:      #f2b441;
+    --amber-dim:  #8a6a26;
+    --go:         #63bd92;
+    --go-dim:     #2f5a48;
+    --mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Menlo", "Consolas", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1b2130 0%, var(--board) 55%);
+    color: var(--ink);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 32px 16px 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  /* ---- Header ---- */
+  header { margin-bottom: 26px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.34em;
+    color: var(--amber);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 10px var(--amber);
+    animation: blink 2.4s steps(1) infinite;
+  }
+  @keyframes blink { 0%,70%{opacity:1} 71%,100%{opacity:.25} }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(30px, 6vw, 44px);
+    letter-spacing: -0.01em;
+    line-height: 1.02;
+    font-weight: 800;
+  }
+  .sub {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 52ch;
+    line-height: 1.5;
+  }
+
+  /* ---- Query card ---- */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  .q-row { display: flex; gap: 10px; }
+  #q {
+    flex: 1;
+    background: var(--board);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font-size: 19px;
+    font-family: var(--sans);
+    padding: 15px 16px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  #q:focus { border-color: var(--amber); }
+  #q::placeholder { color: #59606f; }
+
+  .opt {
+    display: flex; align-items: center; gap: 9px;
+    margin-top: 14px;
+    font-size: 13px; color: var(--muted);
+    cursor: pointer; user-select: none;
+    width: fit-content;
+  }
+  .opt input { position: absolute; opacity: 0; pointer-events: none; }
+  .box {
+    width: 17px; height: 17px; border-radius: 5px;
+    border: 1.5px solid var(--line);
+    display: grid; place-items: center;
+    transition: all .15s;
+  }
+  .opt input:checked + .box { background: var(--amber); border-color: var(--amber); }
+  .box svg { opacity: 0; }
+  .opt input:checked + .box svg { opacity: 1; }
+
+  /* ---- Country picker ---- */
+  .label {
+    font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.22em;
+    color: var(--muted); text-transform: uppercase;
+    margin: 0 2px 12px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .label a { color: var(--amber-dim); text-decoration: none; font-size: 11px; cursor: pointer; }
+  .label a:hover { color: var(--amber); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 7px 13px 7px 9px;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: all .13s;
+  }
+  .chip .code {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .05em;
+    background: var(--board);
+    border-radius: 5px;
+    padding: 2px 5px;
+    color: var(--muted);
+  }
+  .chip:hover { border-color: #48505f; color: var(--ink); }
+  .chip.on {
+    background: rgba(242,180,65,.12);
+    border-color: var(--amber);
+    color: var(--ink);
+  }
+  .chip.on .code { background: var(--amber); color: #201704; }
+
+  /* ---- Board ---- */
+  .board-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 26px 2px 12px;
+  }
+  .board-head .label { margin: 0; }
+  .openall {
+    font-family: var(--mono);
+    font-size: 12px; letter-spacing: .08em;
+    background: var(--go-dim);
+    color: #cdeadd;
+    border: 1px solid #3c7460;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all .13s;
+  }
+  .openall:hover { background: #367057; color: #fff; }
+  .openall:disabled { opacity: .35; cursor: not-allowed; }
+
+  .board { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .flight {
+    display: grid;
+    grid-template-columns: 46px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    background: var(--panel);
+    padding: 14px 16px;
+  }
+  .flight .code {
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--amber);
+    letter-spacing: .04em;
+  }
+  .flight .dest { min-width: 0; }
+  .flight .name { font-size: 15px; }
+  .flight .url {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 3px;
+  }
+  .flight .act { display: flex; gap: 7px; }
+  .go, .copy {
+    font-family: var(--mono);
+    font-size: 12px;
+    border-radius: 7px;
+    padding: 7px 12px;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid var(--line);
+    transition: all .13s;
+    white-space: nowrap;
+  }
+  .go { background: var(--amber); color: #201704; border-color: var(--amber); font-weight: 700; }
+  .go:hover { filter: brightness(1.08); }
+  .copy { background: transparent; color: var(--muted); }
+  .copy:hover { color: var(--ink); border-color: #48505f; }
+  .copy.done { color: var(--go); border-color: var(--go-dim); }
+
+  .empty {
+    background: var(--panel);
+    color: var(--muted);
+    text-align: center;
+    padding: 34px 16px;
+    font-size: 14px;
+  }
+
+  /* ---- Tips ---- */
+  .tips {
+    margin-top: 22px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.65;
+    border-left: 2px solid var(--amber-dim);
+    padding: 2px 0 2px 14px;
+  }
+  .tips b { color: var(--ink); font-weight: 600; }
+
+  @media (max-width: 540px) {
+    .flight { grid-template-columns: 40px 1fr; grid-template-rows: auto auto; }
+    .flight .act { grid-column: 1 / -1; justify-content: flex-end; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Search Terminal · 離境看板</div>
+    <h1>跨國搜尋比較台</h1>
+    <p class="sub">同一個關鍵字,不同國家的人會搜到什麼?選好目的地,一鍵登機。搭配瀏覽器的無痕視窗,更貼近當地人的視角。</p>
+  </header>
+
+  <div class="card">
+    <div class="q-row">
+      <input id="q" type="text" placeholder="輸入關鍵字,例如:珍珠奶茶" autocomplete="off">
+    </div>
+    <label class="opt">
+      <input type="checkbox" id="pws" checked>
+      <span class="box"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.2l2.6 2.6L10 3" stroke="#201704" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      關閉個人化結果(pws=0)— 拿到比較乾淨的基準結果
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="label">
+      <span>選擇目的地</span>
+      <a id="toggleAll">全選 / 全清</a>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="board-head">
+    <div class="label">登機看板</div>
+    <button class="openall" id="openAll">▸ 全部開啟</button>
+  </div>
+  <div class="board" id="board"></div>
+
+  <div class="tips">
+    <b>小提醒:</b>「全部開啟」會一次開很多分頁,瀏覽器可能會擋——若沒反應,請允許本頁的彈出視窗,或改用每列的「開啟」。<br>
+    <b>為什麼要無痕:</b>你自己的搜尋紀錄會影響結果,無痕視窗能避掉這點。<br>
+    <b>能到什麼程度:</b><code>gl</code> 只調整「以哪國為主」,不會真的把你變成在當地。像「附近店家」「地圖」這類高度在地化的結果,仍可能露出你實際所在地——要完全擬真需搭配該國 VPN。
+  </div>
+</div>
+
+<script>
+  const COUNTRIES = [
+    { code: "us", flag: "美國",     name: "United States",  hl: "en"    },
+    { code: "tw", flag: "台灣",     name: "Taiwan",         hl: "zh-TW" },
+    { code: "jp", flag: "日本",     name: "Japan",          hl: "ja"    },
+    { code: "kr", flag: "南韓",     name: "South Korea",    hl: "ko"    },
+    { code: "hk", flag: "香港",     name: "Hong Kong",      hl: "zh-HK" },
+    { code: "gb", flag: "英國",     name: "United Kingdom", hl: "en"    },
+    { code: "sg", flag: "新加坡",   name: "Singapore",      hl: "en"    },
+    { code: "au", flag: "澳洲",     name: "Australia",      hl: "en"    },
+    { code: "ca", flag: "加拿大",   name: "Canada",         hl: "en"    },
+    { code: "fr", flag: "法國",     name: "France",         hl: "fr"    },
+    { code: "de", flag: "德國",     name: "Germany",        hl: "de"    },
+    { code: "th", flag: "泰國",     name: "Thailand",       hl: "th"    },
+    { code: "vn", flag: "越南",     name: "Vietnam",        hl: "vi"    },
+    { code: "in", flag: "印度",     name: "India",          hl: "en"    },
+    { code: "id", flag: "印尼",     name: "Indonesia",      hl: "id"    },
+    { code: "my", flag: "馬來西亞", name: "Malaysia",       hl: "ms"    },
+    { code: "ph", flag: "菲律賓",   name: "Philippines",    hl: "en"    },
+    { code: "br", flag: "巴西",     name: "Brazil",         hl: "pt"    },
+    { code: "mx", flag: "墨西哥",   name: "Mexico",         hl: "es"    },
+    { code: "es", flag: "西班牙",   name: "Spain",          hl: "es"    },
+  ];
+
+  const DEFAULT = new Set(["us", "jp"]);
+  const selected = new Set(DEFAULT);
+
+  const chipsEl = document.getElementById("chips");
+  const boardEl = document.getElementById("board");
+  const qEl     = document.getElementById("q");
+  const pwsEl   = document.getElementById("pws");
+
+  function buildUrl(country) {
+    const q = qEl.value.trim();
+    const params = new URLSearchParams();
+    params.set("q", q || "");
+    params.set("gl", country.code);
+    params.set("hl", country.hl);
+    if (pwsEl.checked) params.set("pws", "0");
+    return "https://www.google.com/search?" + params.toString();
+  }
+
+  function renderChips() {
+    chipsEl.innerHTML = "";
+    COUNTRIES.forEach(c => {
+      const b = document.createElement("button");
+      b.className = "chip" + (selected.has(c.code) ? " on" : "");
+      b.innerHTML = `<span class="code">${c.code.toUpperCase()}</span>${c.flag}`;
+      b.onclick = () => {
+        selected.has(c.code) ? selected.delete(c.code) : selected.add(c.code);
+        renderChips();
+        renderBoard();
+      };
+      chipsEl.appendChild(b);
+    });
+  }
+
+  function renderBoard() {
+    const list = COUNTRIES.filter(c => selected.has(c.code));
+    document.getElementById("openAll").disabled = list.length === 0;
+
+    if (list.length === 0) {
+      boardEl.innerHTML = `<div class="empty">還沒選目的地。往上點幾個國家吧。</div>`;
+      return;
+    }
+
+    boardEl.innerHTML = "";
+    list.forEach(c => {
+      const url = buildUrl(c);
+      const shown = url.replace("https://www.", "");
+      const row = document.createElement("div");
+      row.className = "flight";
+      row.innerHTML = `
+        <div class="code">${c.code.toUpperCase()}</div>
+        <div class="dest">
+          <div class="name">${c.flag} <span style="color:var(--muted);font-size:13px">${c.name}</span></div>
+          <div class="url" title="${url}">${shown}</div>
+        </div>
+        <div class="act">
+          <a class="go" href="${url}" target="_blank" rel="noopener">開啟 ⧉</a>
+          <button class="copy" data-url="${url}">複製</button>
+        </div>`;
+      boardEl.appendChild(row);
+    });
+
+    boardEl.querySelectorAll(".copy").forEach(btn => {
+      btn.onclick = () => {
+        navigator.clipboard.writeText(btn.dataset.url).then(() => {
+          btn.textContent = "已複製";
+          btn.classList.add("done");
+          setTimeout(() => { btn.textContent = "複製"; btn.classList.remove("done"); }, 1400);
+        });
+      };
+    });
+  }
+
+  document.getElementById("openAll").onclick = () => {
+    COUNTRIES.filter(c => selected.has(c.code))
+      .forEach(c => window.open(buildUrl(c), "_blank", "noopener"));
+  };
+
+  document.getElementById("toggleAll").onclick = () => {
+    if (selected.size === COUNTRIES.length) {
+      selected.clear();
+    } else {
+      COUNTRIES.forEach(c => selected.add(c.code));
+    }
+    renderChips();
+    renderBoard();
+  };
+
+  qEl.addEventListener("input", renderBoard);
+  qEl.addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("openAll").click();
+  });
+
+  qEl.value = "珍珠奶茶";
+  renderChips();
+  renderBoard();
+</script>
+</body>
+</html>
