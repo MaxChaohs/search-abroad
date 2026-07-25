@@ -20,30 +20,10 @@
 
 直接用瀏覽器打開 `index.html` 就能用,不需安裝任何東西。
 
-或用靜態伺服器:
-
 ```bash
 npm install
 npm start
 ```
-
-## 部署到 Railway
-
-專案已附 `package.json`,用 `serve` 監聽 Railway 給的 `$PORT`。
-
-**方式一:Railway CLI**
-
-```bash
-npm i -g @railway/cli
-railway login
-railway init
-railway up
-railway domain
-```
-
-**方式二:接 GitHub**
-
-把本 repo 推上 GitHub → Railway → New Project → Deploy from GitHub repo → 選此 repo。之後每次 push 會自動重新部署。部署完到 Settings → Networking → Generate Domain 拿公開網址。
 
 ## 檔案結構
 
